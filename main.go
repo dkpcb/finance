@@ -1,15 +1,25 @@
 package main
 
 import (
-	"github.com/dkpcb/step1/model"
+	"github.com/dkpcb/finatext/data"
+	"github.com/dkpcb/finatext/router"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/labstack/echo/v4"
 )
 
 func main() {
 
-	sqlDB := model.DBConnection()
-	defer sqlDB.Close()
+	db, err := data.DBConnection()
+	if err != nil {
+		panic("failed to connect to database")
+	}
 
-	model.InsertCSVData("csv/trade_history.csv", "trade_history")
-	model.InsertCSVData("csv/reference_prices.csv", "reference_prices")
+	data.InitializeDatabase(db)
+
+	data.InsertCSVData("csv/trade_history.csv", "trade_history")
+	data.InsertCSVData("csv/reference_prices.csv", "reference_prices")
+
+	e := echo.New()
+	router.SetRouter(e, db)
+
 }
