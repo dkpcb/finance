@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/dkpcb/finatext/data"
+	"github.com/dkpcb/finance/data"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )

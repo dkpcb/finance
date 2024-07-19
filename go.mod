@@ -1,4 +1,4 @@
-module github.com/dkpcb/finatext
+module github.com/dkpcb/finance
 
 go 1.22.1
 

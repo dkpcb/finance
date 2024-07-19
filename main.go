@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/dkpcb/finatext/data"
-	"github.com/dkpcb/finatext/router"
+	"github.com/dkpcb/finance/data"
+	"github.com/dkpcb/finance/router"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo/v4"
 )
