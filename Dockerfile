@@ -1,6 +1,6 @@
 FROM golang:1.22-alpine as server-build
 
-WORKDIR  /go/src/finatext
+WORKDIR  /go/src/finance
 
 COPY . .
 
