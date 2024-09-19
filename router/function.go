@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/dkpcb/finatext/data"
+	"github.com/dkpcb/finance/data"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )
@@ -36,31 +36,60 @@ func (h *Handler) GetTradesHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]int64{"count": count})
 }
 
+// func (h *Handler) GetAssetsHandler(c echo.Context) error {
+// 	userID := c.Param("user_id")
+
+// 	currentValue, currentPL, err := data.CalculateAssetsAndPL(h.DB, userID)
+// 	if err != nil {
+// 		log.Printf("Error calculating assets and PL: %v", err)
+// 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Database query error"})
+// 	}
+
+// 	response := AssetResponse{
+// 		Date:         time.Now().Format("2006-01-02"),
+// 		CurrentValue: currentValue,
+// 		CurrentPL:    currentPL,
+// 	}
+
+// 	return c.JSON(http.StatusOK, response)
+// }
+
+// func (h *Handler) GetAssetsdataHandler(c echo.Context) error {
+// 	userID := c.Param("user_id")
+// 	date := c.QueryParam("date")
+
+// 	log.Printf("Received request - userID: %s, date: %s\n", userID, date)
+
+// 	currentValue, currentPL, err := data.CalculateAssetsAndPL_date(h.DB, userID, date)
+// 	if err != nil {
+// 		log.Printf("Error calculating assets and PL: %v", err)
+// 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+// 	}
+
+// 	response := AssetResponse{
+// 		Date:         date,
+// 		CurrentValue: currentValue,
+// 		CurrentPL:    currentPL,
+// 	}
+
+// 	return c.JSON(http.StatusOK, response)
+// }
+
 func (h *Handler) GetAssetsHandler(c echo.Context) error {
-	userID := c.Param("user_id")
-
-	currentValue, currentPL, err := data.CalculateAssetsAndPL(h.DB, userID)
-	if err != nil {
-		log.Printf("Error calculating assets and PL: %v", err)
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Database query error"})
-	}
-
-	response := AssetResponse{
-		Date:         time.Now().Format("2006-01-02"),
-		CurrentValue: currentValue,
-		CurrentPL:    currentPL,
-	}
-
-	return c.JSON(http.StatusOK, response)
-}
-
-func (h *Handler) GetAssetsdataHandler(c echo.Context) error {
 	userID := c.Param("user_id")
 	date := c.QueryParam("date")
 
-	log.Printf("Received request - userID: %s, date: %s\n", userID, date)
+	var currentValue, currentPL int
+	var err error
 
-	currentValue, currentPL, err := data.CalculateAssetsAndPL_date(h.DB, userID, date)
+	if date != "" {
+		log.Printf("Received request - userID: %s, date: %s\n", userID, date)
+		currentValue, currentPL, err = data.CalculateAssetsAndPL_date(h.DB, userID, date)
+	} else {
+		currentValue, currentPL, err = data.CalculateAssetsAndPL(h.DB, userID)
+		date = time.Now().Format("2006-01-02")
+	}
+
 	if err != nil {
 		log.Printf("Error calculating assets and PL: %v", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})

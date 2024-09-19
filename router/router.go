@@ -24,7 +24,6 @@ func SetRouter(e *echo.Echo, db *gorm.DB) error {
 
 	e.GET("/:user_id/trades", handler.GetTradesHandler)
 	e.GET("/:user_id/assets", handler.GetAssetsHandler)
-	e.GET("/:user_id/assetsdata", handler.GetAssetsdataHandler)
 	e.GET("/:user_id/assets/byYear", handler.GetAssetsByYearHandler)
 
 	err := e.Start(":8080")

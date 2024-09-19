@@ -2,11 +2,8 @@ package data
 
 import (
 	"fmt"
-
-	"sort"
-
 	"log"
-
+	"sort"
 	"time"
 
 	"gorm.io/gorm"
@@ -118,12 +115,11 @@ func CalculateAssetsAndPL(db *gorm.DB, userID string) (int, int, error) {
 }
 
 func CalculateAssetsAndPL_date(db *gorm.DB, userID string, date string) (int, int, error) {
-	queryTrade := "SELECT fund_id, quantity FROM trade_histories WHERE user_id = ? AND trade_date = ?"
+	queryTrade := "SELECT fund_id, SUM(quantity) as total_quantity FROM trade_histories WHERE user_id = ? AND trade_date <= ? GROUP BY fund_id"
 	queryReferencePrice := "SELECT reference_price FROM reference_prices WHERE fund_id = ? AND reference_price_date = ?"
-	queryBuyHistory := "SELECT fund_id, trade_date, quantity FROM trade_histories WHERE user_id = ?"
-	queryBuyPrice := "SELECT reference_price FROM reference_prices WHERE fund_id = ? AND reference_price_date = ?"
+	queryBuyHistory := "SELECT fund_id, trade_date, quantity FROM trade_histories WHERE user_id = ? AND trade_date <= ?"
 
-	// user_idを指定してtrade_history.csvからfund_id, quantityを取得
+	// 指定日付までのユーザーの全ての取引を取得
 	rows, err := db.Raw(queryTrade, userID, date).Rows()
 	if err != nil {
 		return 0, 0, fmt.Errorf("failed to query trade_histories: %w", err)
@@ -132,9 +128,6 @@ func CalculateAssetsAndPL_date(db *gorm.DB, userID string, date string) (int, in
 
 	var totalDateValue int
 
-	// fund_id, dateを用いてreference_prices.csvから指定された日のreference_priceを取得
-	// reference_priceとquantityを用いてdateValueを計算
-	// for文を使ってuser_idの中の全てのfund_idに対してtotalDateValue += dateValueを求める
 	for rows.Next() {
 		var fundID string
 		var quantity int
@@ -150,12 +143,11 @@ func CalculateAssetsAndPL_date(db *gorm.DB, userID string, date string) (int, in
 		dateValue := (referencePrice * quantity) / unitsPerFund
 		totalDateValue += dateValue
 
-		// デバッグ用出力
 		fmt.Printf("Date Value Calculation - fundID: %s, quantity: %d, referencePrice: %d, dateValue: %d, totalDateValue: %d\n", fundID, quantity, referencePrice, dateValue, totalDateValue)
 	}
 
-	// user_idを指定してtrade_history.csvからfund_id, trade_date, quantityを取得
-	buyRows, err := db.Raw(queryBuyHistory, userID).Rows()
+	// 指定日付までの購入履歴を取得
+	buyRows, err := db.Raw(queryBuyHistory, userID, date).Rows()
 	if err != nil {
 		return 0, 0, fmt.Errorf("failed to query buy history: %w", err)
 	}
@@ -163,9 +155,6 @@ func CalculateAssetsAndPL_date(db *gorm.DB, userID string, date string) (int, in
 
 	var totalBuyPrice int
 
-	// fund_id, trade_dateを用いてreference_priceを取得
-	// trade_dateとreference_priceを用いてbuyPrice を計算
-	// for文を使ってuser_idの中の全てのfund_idに対してtotalFundBuyPrice += buyPriceを求める
 	for buyRows.Next() {
 		var fundID string
 		var tradeDateStr string
@@ -175,14 +164,13 @@ func CalculateAssetsAndPL_date(db *gorm.DB, userID string, date string) (int, in
 		}
 
 		var buyReferencePrice int
-		if err := db.Raw(queryBuyPrice, fundID, tradeDateStr).Scan(&buyReferencePrice).Error; err != nil {
+		if err := db.Raw(queryReferencePrice, fundID, tradeDateStr).Scan(&buyReferencePrice).Error; err != nil {
 			return 0, 0, fmt.Errorf("failed to query buy reference_price for fund %s on date %s: %w", fundID, tradeDateStr, err)
 		}
 
 		buyPrice := (buyReferencePrice * buyQuantity) / unitsPerFund
 		totalBuyPrice += buyPrice
 
-		// デバッグ用出力
 		fmt.Printf("Buy Price Calculation - fundID: %s, tradeDate: %s, buyQuantity: %d, buyReferencePrice: %d, buyPrice: %d, totalBuyPrice: %d\n", fundID, tradeDateStr, buyQuantity, buyReferencePrice, buyPrice, totalBuyPrice)
 	}
 
@@ -190,10 +178,8 @@ func CalculateAssetsAndPL_date(db *gorm.DB, userID string, date string) (int, in
 		return 0, 0, fmt.Errorf("error occurred during iteration of trade_histories rows: %w", err)
 	}
 
-	// 最後にcurrentPL := totalDateValue - totalBuyPriceを求める
 	currentPL := totalDateValue - totalBuyPrice
 
-	// デバッグ用出力
 	fmt.Printf("Final Calculation - totalDateValue: %d, totalBuyPrice: %d, currentPL: %d\n", totalDateValue, totalBuyPrice, currentPL)
 
 	return totalDateValue, currentPL, nil
