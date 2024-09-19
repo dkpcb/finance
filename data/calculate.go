@@ -2,7 +2,7 @@ package data
 
 import (
 	"fmt"
-	"log"
+	//"log"
 	"sort"
 	"time"
 
@@ -192,7 +192,7 @@ func CalculateAssetsAndPLByYear(db *gorm.DB, userID string, currentDate string) 
 	queryBuyPrice := "SELECT reference_price FROM reference_prices WHERE fund_id = ? AND reference_price_date = ?"
 
 	// デバッグ用出力
-	log.Printf("Executing query: %s with user_id: %s", queryTrade, userID)
+	//log.Printf("Executing query: %s with user_id: %s", queryTrade, userID)
 
 	rows, err := db.Raw(queryTrade, userID).Rows()
 	if err != nil {
@@ -211,7 +211,7 @@ func CalculateAssetsAndPLByYear(db *gorm.DB, userID string, currentDate string) 
 		}
 
 		// デバッグ用出力
-		log.Printf("Trade row - fundID: %s, quantity: %d, year: %d", fundID, quantity, year)
+		//log.Printf("Trade row - fundID: %s, quantity: %d, year: %d", fundID, quantity, year)
 
 		if _, exists := yearMap[year]; !exists {
 			yearMap[year] = map[string]int{"current_value": 0, "buy_price": 0}
@@ -223,13 +223,13 @@ func CalculateAssetsAndPLByYear(db *gorm.DB, userID string, currentDate string) 
 		}
 
 		// デバッグ用出力
-		log.Printf("Reference price - fundID: %s, referencePrice: %d", fundID, referencePrice)
+		//log.Printf("Reference price - fundID: %s, referencePrice: %d", fundID, referencePrice)
 
 		currentValue := (referencePrice * quantity) / unitsPerFund
 		yearMap[year]["current_value"] += currentValue
 
 		// デバッグ用出力
-		log.Printf("Current value calculation - year: %d, currentValue: %d, totalCurrentValue: %d", year, currentValue, yearMap[year]["current_value"])
+		//log.Printf("Current value calculation - year: %d, currentValue: %d, totalCurrentValue: %d", year, currentValue, yearMap[year]["current_value"])
 	}
 
 	buyRows, err := db.Raw(queryBuyHistory, userID).Rows()
@@ -254,7 +254,7 @@ func CalculateAssetsAndPLByYear(db *gorm.DB, userID string, currentDate string) 
 		}
 
 		// デバッグ用出力
-		log.Printf("Buy row - fundID: %s, tradeDate: %s, quantity: %d", fundID, tradeDate.Format("2006-01-02"), buyQuantity)
+		//log.Printf("Buy row - fundID: %s, tradeDate: %s, quantity: %d", fundID, tradeDate.Format("2006-01-02"), buyQuantity)
 
 		var buyReferencePrice int
 		if err := db.Raw(queryBuyPrice, fundID, tradeDate.Format("2006-01-02")).Scan(&buyReferencePrice).Error; err != nil {
@@ -262,13 +262,13 @@ func CalculateAssetsAndPLByYear(db *gorm.DB, userID string, currentDate string) 
 		}
 
 		// デバッグ用出力
-		log.Printf("Buy reference price - fundID: %s, tradeDate: %s, referencePrice: %d", fundID, tradeDate.Format("2006-01-02"), buyReferencePrice)
+		//log.Printf("Buy reference price - fundID: %s, tradeDate: %s, referencePrice: %d", fundID, tradeDate.Format("2006-01-02"), buyReferencePrice)
 
 		buyPrice := (buyReferencePrice * buyQuantity) / unitsPerFund
 		yearMap[year]["buy_price"] += buyPrice
 
 		// デバッグ用出力
-		log.Printf("Buy price calculation - year: %d, buyPrice: %d, totalBuyPrice: %d", year, buyPrice, yearMap[year]["buy_price"])
+		//log.Printf("Buy price calculation - year: %d, buyPrice: %d, totalBuyPrice: %d", year, buyPrice, yearMap[year]["buy_price"])
 	}
 
 	if err := rows.Err(); err != nil {
@@ -285,7 +285,7 @@ func CalculateAssetsAndPLByYear(db *gorm.DB, userID string, currentDate string) 
 		})
 
 		// デバッグ用出力
-		log.Printf("Yearly calculation - year: %d, currentValue: %d, buyPrice: %d, currentPL: %d", year, values["current_value"], values["buy_price"], currentPL)
+		//log.Printf("Yearly calculation - year: %d, currentValue: %d, buyPrice: %d, currentPL: %d", year, values["current_value"], values["buy_price"], currentPL)
 	}
 
 	// 年で降順にソート
